@@ -4,12 +4,30 @@
  * based on julius-simple.c (julius 4.1.5) by Akinobu Lee
  */
 
-/* include top Julius library header */
 extern "C" {
 #include <julius/juliuslib.h>
 }
 
+#include <stdio.h>
 #include <time.h>
+#include <pthread.h>
+
+typedef struct workorder {
+  void *dummy;
+} workorder_t;
+
+typedef struct {
+  int dummy;
+} thread_info_t;
+
+static thread_info_t m_thread_info;
+
+static void 
+send(const char *msg)
+{
+  printf("%s\n", msg);
+  fflush(stdout);
+}
 
 static void 
 tell(const char *msg)
@@ -53,6 +71,7 @@ put_hypo_phoneme(WORD_ID *seq, int n, WORD_INFO *winfo)
 static void
 output_result(Recog *recog, void *dummy)
 {
+#if 0
   int i, j;
   int len;
   WORD_INFO *winfo;
@@ -197,6 +216,10 @@ output_result(Recog *recog, void *dummy)
     }
   }
   fflush(stdout);
+#endif
+  // sleep(3);
+  send("to @AM-MCL set Speak = 12345");
+  // sleep(3);
 }
 
 /* based on julius/output_module.c */
@@ -257,9 +280,10 @@ result_pass1_current(Recog *recog, void *dummy)
   }
 }
 
-int
-main(int argc, char *argv[])
+void *julius_worker( void *julius_workorderp )
 {
+  workorder_t *workorderp = (workorder_t *)julius_workorderp;
+
   Jconf *jconf; // Julius configuration parameter holder
   Recog *recog; // Julius recognition instance
 
@@ -271,13 +295,13 @@ main(int argc, char *argv[])
   jconf = j_config_load_file_new(conf_file_name);
   if (jconf == NULL) {
     tell("error in j_config_load_file_new");
-    return -1;
+    return NULL;
   }
   
   recog = j_create_instance_from_jconf(jconf);
   if (recog == NULL) {
     tell("error in j_create_instance_from_jconf");
-    return -1;
+    return NULL;
   }
 
   callback_add(recog, CALLBACK_EVENT_SPEECH_READY, status_recready, NULL);
@@ -287,7 +311,7 @@ main(int argc, char *argv[])
 
   if (j_adin_init(recog) == FALSE) {    
     tell("error in j_adin_init");
-    return -1;
+    return NULL;
   }
 
   j_recog_info(recog); /* output system information to log */
@@ -298,19 +322,55 @@ main(int argc, char *argv[])
     break;
   case -1:      		
     tell("error in input stream");
-    return(-1);
+    return NULL;
   case -2:
     tell("error in beginning input");
-    return(-2);
+    return NULL;
   }
-    
+  fflush(srm_log_fp);
+
   int ret = j_recognize_stream(recog);
   if (ret == -1) {
     tell("error j_recognize_stream");
-    return -1;
+    return NULL;
   }
 
   j_close_stream(recog);
   j_recog_free(recog);
+
+  free(workorderp);
+  return NULL;
+}
+
+void chomp(const char *s)
+{
+  char *p;
+  while (s != NULL && (p = strrchr(s, '\n')) != NULL) {
+    *p = '\0';
+  }
+}
+
+int
+main(int argc, char *argv[])
+{
+  pthread_t *worker_threadp;
+  workorder_t *workorderp;
+  worker_threadp = (pthread_t *) malloc(sizeof(pthread_t));
+  pthread_create( worker_threadp, NULL, julius_worker, (void *) workorderp );
+  pthread_detach( *worker_threadp );
+  free( worker_threadp );
+
+  FILE *dm_log_fp = fopen("dm_log.txt", "w"); 
+
+  for (int n = 0 ; ; n++) {
+    const int bufsize = 1000;
+    char ibuf[bufsize], obuf[bufsize];
+    char *ret = fgets( ibuf, bufsize, stdin );
+    chomp(ibuf);
+    sprintf(obuf, "%d %s", n, ibuf);
+    // tell(buf);
+    fprintf(dm_log_fp, "%s\n", obuf); 
+    fflush(dm_log_fp);
+  }
   return(0);
 }
