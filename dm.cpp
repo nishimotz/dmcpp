@@ -57,21 +57,21 @@ put_hypo_phoneme(WORD_ID *seq, int n, WORD_INFO *winfo)
 
   if (seq != NULL) {
     for (i=0;i<n;i++) {
-      if (i > 0) printf(" |");
+      if (i > 0) 
+	fprintf(stderr, " |");
       w = seq[i];
       for (j=0;j<winfo->wlen[w];j++) {
 	center_name(winfo->wseq[w][j]->name, buf);
-	printf(" %s", buf);
+	fprintf(stderr, " %s", buf);
       }
     }
   }
-  printf("\n");  
+  fprintf(stderr, "\n");  
 }
 
 static void
 output_result(Recog *recog, void *dummy)
 {
-#if 0
   int i, j;
   int len;
   WORD_INFO *winfo;
@@ -97,22 +97,22 @@ output_result(Recog *recog, void *dummy)
       /* outout message according to the status code */
       switch(r->result.status) {
       case J_RESULT_STATUS_REJECT_POWER:
-	printf("<input rejected by power>\n");
+	fprintf(stderr, "<input rejected by power>\n");
 	break;
       case J_RESULT_STATUS_TERMINATE:
-	printf("<input teminated by request>\n");
+	fprintf(stderr, "<input teminated by request>\n");
 	break;
       case J_RESULT_STATUS_ONLY_SILENCE:
-	printf("<input rejected by decoder (silence input result)>\n");
+	fprintf(stderr, "<input rejected by decoder (silence input result)>\n");
 	break;
       case J_RESULT_STATUS_REJECT_GMM:
-	printf("<input rejected by GMM>\n");
+	fprintf(stderr, "<input rejected by GMM>\n");
 	break;
       case J_RESULT_STATUS_REJECT_SHORT:
-	printf("<input rejected by short input>\n");
+	fprintf(stderr, "<input rejected by short input>\n");
 	break;
       case J_RESULT_STATUS_FAIL:
-	printf("<search failed>\n");
+	fprintf(stderr, "<search failed>\n");
 	break;
       }
       /* continue to next process instance */
@@ -129,97 +129,48 @@ output_result(Recog *recog, void *dummy)
       seqnum = s->word_num;
 
       /* output word sequence like Julius */
-      printf("sentence%d:", n+1);
-      for(i=0;i<seqnum;i++) printf(" %s", winfo->woutput[seq[i]]);
-      printf("\n");
-      /* LM entry sequence */
-      printf("wseq%d:", n+1);
-      for(i=0;i<seqnum;i++) printf(" %s", winfo->wname[seq[i]]);
-      printf("\n");
-      /* phoneme sequence */
-      printf("phseq%d:", n+1);
-      put_hypo_phoneme(seq, seqnum, winfo);
-      printf("\n");
-      /* confidence scores */
-      printf("cmscore%d:", n+1);
-      for (i=0;i<seqnum; i++) printf(" %5.3f", s->confidence[i]);
-      printf("\n");
-      /* AM and LM scores */
-      printf("score%d: %f", n+1, s->score);
-      if (r->lmtype == LM_PROB) { /* if this process uses N-gram */
-	printf(" (AM: %f  LM: %f)", s->score_am, s->score_lm);
+      fprintf(stderr, "sentence%d:", n+1);
+      for(i=0;i<seqnum;i++) 
+	fprintf(stderr, " %s", winfo->woutput[seq[i]]);
+      fprintf(stderr, "\n");
+
+      if (n == 0 and seqnum == 3) {
+	const int size = 1000;
+	char buf[size];
+	sprintf(buf, "to @AM-MCL set Speak = %sですね", winfo->woutput[seq[1]]);
+	send(buf);
       }
-      printf("\n");
+
+      /* LM entry sequence */
+      fprintf(stderr, "wseq%d:", n+1);
+      for(i=0;i<seqnum;i++) 
+	fprintf(stderr, " %s", winfo->wname[seq[i]]);
+      fprintf(stderr, "\n");
+      /* phoneme sequence */
+      fprintf(stderr, "phseq%d:", n+1);
+      put_hypo_phoneme(seq, seqnum, winfo);
+      fprintf(stderr, "\n");
+      /* confidence scores */
+      fprintf(stderr, "cmscore%d:", n+1);
+      for (i=0;i<seqnum; i++) 
+	fprintf(stderr, " %5.3f", s->confidence[i]);
+      fprintf(stderr, "\n");
+      /* AM and LM scores */
+      fprintf(stderr, "score%d: %f", n+1, s->score);
+      if (r->lmtype == LM_PROB) { /* if this process uses N-gram */
+	fprintf(stderr, " (AM: %f  LM: %f)", s->score_am, s->score_lm);
+      }
+      fprintf(stderr, "\n");
       if (r->lmtype == LM_DFA) { /* if this process uses DFA grammar */
 	/* output which grammar the hypothesis belongs to
 	   when using multiple grammars */
 	if (multigram_get_all_num(r->lm) > 1) {
-	  printf("grammar%d: %d\n", n+1, s->gram_id);
+	  fprintf(stderr, "grammar%d: %d\n", n+1, s->gram_id);
 	}
-      }
-      
-      /* output alignment result if exist */
-      for (align = s->align; align; align = align->next) {
-	printf("=== begin forced alignment ===\n");
-	switch(align->unittype) {
-	case PER_WORD:
-	  printf("-- word alignment --\n"); break;
-	case PER_PHONEME:
-	  printf("-- phoneme alignment --\n"); break;
-	case PER_STATE:
-	  printf("-- state alignment --\n"); break;
-	}
-	printf(" id: from  to    n_score    unit\n");
-	printf(" ----------------------------------------\n");
-	for(i=0;i<align->num;i++) {
-	  printf("[%4d %4d]  %f  ", align->begin_frame[i], align->end_frame[i], align->avgscore[i]);
-	  switch(align->unittype) {
-	  case PER_WORD:
-	    printf("%s\t[%s]\n", winfo->wname[align->w[i]], winfo->woutput[align->w[i]]);
-	    break;
-	  case PER_PHONEME:
-	    p = align->ph[i];
-	    if (p->is_pseudo) {
-	      printf("{%s}\n", p->name);
-	    } else if (strmatch(p->name, p->body.defined->name)) {
-	      printf("%s\n", p->name);
-	    } else {
-	      printf("%s[%s]\n", p->name, p->body.defined->name);
-	    }
-	    break;
-	  case PER_STATE:
-	    p = align->ph[i];
-	    if (p->is_pseudo) {
-	      printf("{%s}", p->name);
-	    } else if (strmatch(p->name, p->body.defined->name)) {
-	      printf("%s", p->name);
-	    } else {
-	      printf("%s[%s]", p->name, p->body.defined->name);
-	    }
-	    if (r->am->hmminfo->multipath) {
-	      if (align->is_iwsp[i]) {
-		printf(" #%d (sp)\n", align->loc[i]);
-	      } else {
-		printf(" #%d\n", align->loc[i]);
-	      }
-	    } else {
-	      printf(" #%d\n", align->loc[i]);
-	    }
-	    break;
-	  }
-	}
-	
-	printf("re-computed AM score: %f\n", align->allscore);
-
-	printf("=== end forced alignment ===\n");
       }
     }
   }
-  fflush(stdout);
-#endif
-  // sleep(3);
-  send("to @AM-MCL set Speak = 12345");
-  // sleep(3);
+  fflush(stderr);
 }
 
 /* based on julius/output_module.c */
@@ -232,16 +183,18 @@ msock_word_out1(WORD_ID w, RecogProcess *r)
 
   winfo = r->lm->winfo;
 
-  printf(" WORD=\"%s\"", winfo->woutput[w]);
-  printf(" CLASSID=\"%s\"", winfo->wname[w]);
-  printf(" PHONE=\"");
+  fprintf(stderr, " WORD=\"%s\"", winfo->woutput[w]);
+  fprintf(stderr, " CLASSID=\"%s\"", winfo->wname[w]);
+  fprintf(stderr, " PHONE=\"");
     for(j=0;j<winfo->wlen[w];j++) {
       /* libsent/src/hmminfo/cdhmm.c */ 
       center_name(winfo->wseq[w][j]->name, buf);
-      if (j == 0) printf("%s", buf);
-      else printf(" %s", buf);
+      if (j == 0) 
+	fprintf(stderr, "%s", buf);
+      else 
+	fprintf(stderr, " %s", buf);
     }
-    printf("\"");
+    fprintf(stderr, "\"");
 }
 
 static void
@@ -266,17 +219,17 @@ result_pass1_current(Recog *recog, void *dummy)
     num = r->result.pass1.word_num;
 
     if (multi) {
-      printf("<RECOGOUT ID=\"SR%02d\" NAME=\"%s\">\n", r->config->id, r->config->name);
+      fprintf(stderr, "<RECOGOUT ID=\"SR%02d\" NAME=\"%s\">\n", r->config->id, r->config->name);
     } else {
-      printf("<RECOGOUT>\n");
+      fprintf(stderr, "<RECOGOUT>\n");
     }
-    printf("  <PHYPO PASS=\"1\" SCORE=\"%f\" FRAME=\"%d\" TIME=\"%ld\"/>\n", r->result.pass1.score, r->result.num_frame, time(NULL));
+    fprintf(stderr, "  <PHYPO PASS=\"1\" SCORE=\"%f\" FRAME=\"%d\" TIME=\"%ld\">\n", r->result.pass1.score, r->result.num_frame, time(NULL));
     for (i=0;i<num;i++) {
-      printf("    <WHYPO");
+      fprintf(stderr, "    <WHYPO");
       msock_word_out1(seq[i], r);
-      printf("/>\n");
+      fprintf(stderr, "/>\n");
     }
-    printf("  </PHYPO>\n</RECOGOUT>\n.\n");
+    fprintf(stderr, "  </PHYPO>\n</RECOGOUT>\n.\n");
   }
 }
 
@@ -288,7 +241,7 @@ void *julius_worker( void *julius_workorderp )
   Recog *recog; // Julius recognition instance
 
   FILE *srm_log_fp; 
-  srm_log_fp = fopen("srm_log.txt", "w"); 
+  srm_log_fp = fopen("_srm_log.txt", "w"); 
   jlog_set_output(srm_log_fp);
 
   char conf_file_name[] = "julius.conf";
@@ -342,7 +295,7 @@ void *julius_worker( void *julius_workorderp )
   return NULL;
 }
 
-void chomp(const char *s)
+void chomp(char *s)
 {
   char *p;
   while (s != NULL && (p = strrchr(s, '\n')) != NULL) {
@@ -360,7 +313,7 @@ main(int argc, char *argv[])
   pthread_detach( *worker_threadp );
   free( worker_threadp );
 
-  FILE *dm_log_fp = fopen("dm_log.txt", "w"); 
+  FILE *dm_log_fp = fopen("_dm_log.txt", "w"); 
 
   for (int n = 0 ; ; n++) {
     const int bufsize = 1000;

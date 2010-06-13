@@ -9,7 +9,7 @@ all: dm gram
 dm: dm.cpp
 	$(CC) $(CFLAGS) $(CPPFLAGS) -o dm dm.cpp $(LDFLAGS)
 
-gram:
+gram: gram.txt
 	rake
 
 clean:
