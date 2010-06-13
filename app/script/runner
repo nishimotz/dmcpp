@@ -1,0 +1,12 @@
+#!/usr/bin/ruby -Ku
+$runner_dir = File.expand_path(File.join(File.dirname(__FILE__), '..'))
+$skel_dir = File.expand_path(File.join(File.dirname(__FILE__), '../skel'))
+$tmp_dir = File.expand_path(File.join(File.dirname(__FILE__), '../tmp'))
+$generator_dir = "/usr/local/galatea-dialog"
+[ $runner_dir, $generator_dir ].each do |d|
+  f = File.join(d, 'lib', 'galatea_runner.rb')
+  if File.exist?(f)
+    $library_dir = File.join(d , 'lib')
+    load(f) 
+  end
+end

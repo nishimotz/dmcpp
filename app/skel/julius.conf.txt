@@ -1,0 +1,28 @@
+<%
+gram_dir = p('srm.julius.engine_dir') + '/GramJulian'
+am_dir   = p('srm.julius.engine_dir') + '/AcousticModel'
+%>
+-dfa <%= gram_dir %>/vfr/vfr.dfa 
+-v   <%= gram_dir %>/vfr/vfr.dict
+-gmmreject "noise,laugh,cough"
+-gmm   <%= am_dir %>/gmmdefs.binhmm 
+-hlist <%= am_dir %>/logicalTri 
+-h     <%= am_dir %>/hmmdefs,ptm,gid.binhmm
+-spsegment
+-looktrellis 
+-input alsa
+-b 600 
+-b2 40 
+-lookuprange 5 
+-gmmnum 10 
+-proginterval 300 
+-outcode WLPSC 
+-zmeanframe 
+-tmix 2 
+-m 1000 
+-s 500 
+-n 1 
+-output 1 
+-lv 1000 
+-rejectshort 400 
+-module 10500

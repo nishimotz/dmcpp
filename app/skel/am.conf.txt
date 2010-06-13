@@ -1,0 +1,31 @@
+# am.conf
+#------------------------------------------------------------------
+# $Id: am.conf.txt,v 1.2 2009/08/24 13:19:48 nishimoto Exp $
+#
+<%
+classpath = p('javascript.jar') + ":" + p('dm.jar') 
+java_bin = p('java.bin')
+ruby_bin = p('ruby.bin')
+am_commands_dm = "#{java_bin} -cp #{classpath} galatea.dialog.DialogManager -c #{@runner_tmp_dir}/gdm.conf" + " " + @dm_options
+am_commands_fsm = "cd #{p('fsm.galateafsm.engine_dir')}; ./fsm -C #{@runner_tmp_dir}/fsm.conf"
+am_commands_fs_mcl = "#{java_bin} -cp #{classpath} galatea.agent.BehaviorManager -c #{@runner_tmp_dir}/gdm.conf"
+am_commands_ssm = "cd #{p('ssm.gtalk.engine_dir')}; /usr/bin/padsp ./gtalk -C #{@runner_tmp_dir}/ssm.conf"
+%>
+#------------------------------------------------------------------
+broadcast: AM-MCL FS-MCL PAR DM
+#------------------------------------------------------------------
+# control
+# module:DM     commands: <%= am_commands_dm %>
+module:DM     commands: cd <%= File.join($runner_dir, '..') %>; ./dm
+#------------------------------------------------------------------
+# input 
+# module:SRM  commands:
+#------------------------------------------------------------------
+# output
+module:FSM    commands: <%= am_commands_fsm %>
+module:SSM    commands: <%= am_commands_ssm %>
+module:FS-MCL commands: <%= am_commands_fs_mcl %>
+module:AM-MCL commands: <%= ruby_bin %> AM-MCL.rb -C <%= @runner_tmp_dir %>/am_mcl.conf
+module:PAR    commands: <%= ruby_bin %> PAR.rb
+module:DIM    commands: <%= ruby_bin %> DIM.rb
+#----- EOF --------------------------------------------------------

@@ -1,0 +1,59 @@
+# Galatea Dialog Studio configuration skelton
+# (c) Takuya NISHIMOTO
+# $Id: gdm.conf.txt,v 1.4 2009/08/24 13:19:48 nishimoto Exp $
+<%
+dm_lang = p('dm.lang')
+srm_lang = p('dm.lang')
+grammar_mkdfa_dir = p('srm.julius.engine_dir') + "/bin"
+grammar_mkdfa_exe = "mkdfa.pl"
+
+julius_server_runner_dir = p('srm.julius.engine_dir')
+julius_server_runner_arg = "-C #{@runner_tmp_dir}/julius.conf"
+julius_server_runner_exe = p('srm.julius.bin') || p('srm.julius.engine_dir') + "/bin/julius"
+%>
+
+# awt.useSystemAAFontSettings :on
+
+DM.Language                :<%= dm_lang %>
+DM.CondidenceMeasureThres  :0.5
+
+AMThread.StartupWait       :0
+
+Logger.IC                  :0
+Logger.RecogInterpreter    :0
+Logger.SubProcess          :0
+Logger.AMThread            :0
+Logger.JuliusClient        :1
+Logger.JuliusServerRunner  :0
+Logger.JuliusSubModule     :0
+Logger.GrammarSubModule    :0
+
+# built-in GRM
+Grammar.Mkdfa.Dir	          : <%= grammar_mkdfa_dir %>
+Grammar.Mkdfa.Exe	          : <%= grammar_mkdfa_exe %>
+Grammar.Mkdfa.Perl	          : <%= p('perl.bin') %>
+Grammar.WorkDir		          : <%= @runner_tmp_dir %>
+Grammar.TemplateResourcePath  : /res/grammar/grammar-<%= srm_lang %>.xml
+Grammar.UseMkdfaExe           : 0
+
+# switch SRM
+DM.UseWrapper.SRM	: 0
+JuliusServerRunner.Dir : <%= julius_server_runner_dir %>
+JuliusServerRunner.Arg : <%= julius_server_runner_arg %>
+JuliusServerRunner.Exe : <%= julius_server_runner_exe %>
+
+# switch SSM
+DM.UseWrapper.SSM	: 1
+
+# for Dialog Studio GUI
+user.dir.suffix	: /../
+
+# for BehaviorManager
+Behavior.DefaultAgent : <%= p('default_agent') %>
+Behavior.NumAgent : <%= p('agents').count %>
+<% p('agents').each_with_index do |o,i| -%>
+Behavior.Agent.<%= i+1 %> : <%= o['name'] %> <%= o['mask'] %> <%= o['speaker'] %> <%= o['bg'] %> <%= o['scale'] %>
+<% end -%>
+
+# End of file
+

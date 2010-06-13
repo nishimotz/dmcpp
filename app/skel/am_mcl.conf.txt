@@ -1,0 +1,11 @@
+# $Id: am_mcl.conf.txt,v 1.3 2009/08/24 13:19:48 nishimoto Exp $
+
+default_agent : <%= p('default_agent') %>
+agents:
+<% p('agents').each do |o| -%>
+  - name : <%= o['name'] %> 
+    mask : <%= o['mask'] %> 
+    speaker : <%= o['speaker'] %> 
+<% end -%>
+
+# eof
