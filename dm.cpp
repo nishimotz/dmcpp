@@ -1,16 +1,34 @@
 /**
  * dm.cpp
- * by Takuya Nishimoto
- * based on julius-simple.c (julius 4.1.5) by Akinobu Lee
+ * 2010-06 by Takuya Nishimoto
+ * http://ja.nishimotz.com/project:dmcpp
+ * based on 
+ *  julius-simple.c (julius 4.1.5) by Akinobu Lee
+ *  facedetect.cpp (http://sourceforge.net/projects/opencvlibrary/)
  */
 
-extern "C" {
+// julius-local
 #include <julius/juliuslib.h>
-}
 
-#include <stdio.h>
+// opencv-local
+#include <cv.h>
+#include <highgui.h>
+using namespace std;
+using namespace cv;
+
+String cascadeName =
+"/usr/local/share/opencv/haarcascades/haarcascade_frontalface_alt.xml";
+String nestedCascadeName =
+"/usr/local/share/opencv/haarcascades/haarcascade_eye_tree_eyeglasses.xml";
+
+#include <iostream>
+#include <cstdio>
 #include <time.h>
 #include <pthread.h>
+
+// -----------------------------------------------------------
+// thread management
+// -----------------------------------------------------------
 
 typedef struct workorder {
   void *dummy;
@@ -35,6 +53,10 @@ tell(const char *msg)
   printf("tell %s\n", msg);
   fflush(stdout);
 }
+
+// -----------------------------------------------------------
+// speech recognition
+// -----------------------------------------------------------
 
 static void
 status_recready(Recog *recog, void *dummy)
@@ -233,9 +255,9 @@ result_pass1_current(Recog *recog, void *dummy)
   }
 }
 
-void *julius_worker( void *julius_workorderp )
+void *julius_worker( void *my_workorderp )
 {
-  workorder_t *workorderp = (workorder_t *)julius_workorderp;
+  workorder_t *workorderp = (workorder_t *)my_workorderp;
 
   Jconf *jconf; // Julius configuration parameter holder
   Recog *recog; // Julius recognition instance
@@ -295,7 +317,110 @@ void *julius_worker( void *julius_workorderp )
   return NULL;
 }
 
-void chomp(char *s)
+// -----------------------------------------------------------
+// face detection
+// -----------------------------------------------------------
+void detectAndDraw( Mat& img,
+                   CascadeClassifier& cascade, CascadeClassifier& nestedCascade,
+                   double scale)
+{
+    int i = 0;
+    double t = 0;
+    vector<Rect> faces;
+    const static Scalar colors[] =  { CV_RGB(0,0,255),
+        CV_RGB(0,128,255),
+        CV_RGB(0,255,255),
+        CV_RGB(0,255,0),
+        CV_RGB(255,128,0),
+        CV_RGB(255,255,0),
+        CV_RGB(255,0,0),
+        CV_RGB(255,0,255)} ;
+    Mat gray, smallImg( cvRound (img.rows/scale), cvRound(img.cols/scale), CV_8UC1 );
+
+    cvtColor( img, gray, CV_BGR2GRAY );
+    resize( gray, smallImg, smallImg.size(), 0, 0, INTER_LINEAR );
+    equalizeHist( smallImg, smallImg );
+
+    t = (double)cvGetTickCount();
+    cascade.detectMultiScale( smallImg, faces,
+        1.1, 2, 0
+        //|CV_HAAR_FIND_BIGGEST_OBJECT
+        //|CV_HAAR_DO_ROUGH_SEARCH
+        |CV_HAAR_SCALE_IMAGE
+        ,
+        Size(30, 30) );
+    t = (double)cvGetTickCount() - t;
+    printf( "detection time = %g ms\n", t/((double)cvGetTickFrequency()*1000.) );
+    for( vector<Rect>::const_iterator r = faces.begin(); r != faces.end(); r++, i++ )
+    {
+        Mat smallImgROI;
+        vector<Rect> nestedObjects;
+        Point center;
+        Scalar color = colors[i%8];
+        int radius;
+        center.x = cvRound((r->x + r->width*0.5)*scale);
+        center.y = cvRound((r->y + r->height*0.5)*scale);
+        radius = cvRound((r->width + r->height)*0.25*scale);
+        circle( img, center, radius, color, 3, 8, 0 );
+        if( nestedCascade.empty() )
+            continue;
+        smallImgROI = smallImg(*r);
+        nestedCascade.detectMultiScale( smallImgROI, nestedObjects,
+            1.1, 2, 0
+            //|CV_HAAR_FIND_BIGGEST_OBJECT
+            //|CV_HAAR_DO_ROUGH_SEARCH
+            //|CV_HAAR_DO_CANNY_PRUNING
+            |CV_HAAR_SCALE_IMAGE
+            ,
+            Size(30, 30) );
+        for( vector<Rect>::const_iterator nr = nestedObjects.begin(); nr != nestedObjects.end(); nr++ )
+        {
+            center.x = cvRound((r->x + nr->x + nr->width*0.5)*scale);
+            center.y = cvRound((r->y + nr->y + nr->height*0.5)*scale);
+            radius = cvRound((nr->width + nr->height)*0.25*scale);
+            circle( img, center, radius, color, 3, 8, 0 );
+        }
+    }  
+    cv::imshow( "opencv result", img );    
+}
+
+void *cv_worker( void *my_workorderp )
+{
+  workorder_t *workorderp = (workorder_t *)my_workorderp;
+  Mat frame, frameCopy;
+  CascadeClassifier cascade, nestedCascade;
+  if( !cascade.load( cascadeName ) ) {
+    cerr << "ERROR: Could not load classifier cascade" << endl;
+    return NULL;
+  }
+  if( !nestedCascade.load( nestedCascadeName ) ) {
+    cerr << "WARNING: Could not load classifier cascade for nested objects" << endl;
+  }
+  double scale = 4;
+  CvCapture* capture = cvCaptureFromCAM(0);
+  cvNamedWindow( "opencv result", 1 );
+  for(;;) {
+    IplImage* iplImg = cvQueryFrame( capture );
+    frame = iplImg;
+    if( frame.empty() )
+      break;
+    if( iplImg->origin == IPL_ORIGIN_TL )
+      frame.copyTo( frameCopy );
+    else
+      flip( frame, frameCopy, 0 );
+    detectAndDraw( frameCopy, cascade, nestedCascade, scale );
+    if( waitKey( 10 ) >= 0 )
+      goto _cleanup_;
+  }
+  waitKey(0);
+ _cleanup_:
+  cvReleaseCapture( &capture );
+}
+
+// -----------------------------------------------------------
+
+void 
+chomp(char *s)
 {
   char *p;
   while (s != NULL && (p = strrchr(s, '\n')) != NULL) {
@@ -306,12 +431,19 @@ void chomp(char *s)
 int
 main(int argc, char *argv[])
 {
-  pthread_t *worker_threadp;
-  workorder_t *workorderp;
-  worker_threadp = (pthread_t *) malloc(sizeof(pthread_t));
-  pthread_create( worker_threadp, NULL, julius_worker, (void *) workorderp );
-  pthread_detach( *worker_threadp );
-  free( worker_threadp );
+  workorder_t *workorderp; // TODO: initialize
+
+  pthread_t *julius_threadp;
+  julius_threadp = (pthread_t *) malloc(sizeof(pthread_t));
+  pthread_create( julius_threadp, NULL, julius_worker, (void *) workorderp );
+  pthread_detach( *julius_threadp );
+  free( julius_threadp );
+
+  pthread_t *cv_threadp;
+  cv_threadp = (pthread_t *) malloc(sizeof(pthread_t));
+  pthread_create( cv_threadp, NULL, cv_worker, (void *) workorderp );
+  pthread_detach( *cv_threadp );
+  free( cv_threadp );
 
   FILE *dm_log_fp = fopen("_dm_log.txt", "w"); 
 
