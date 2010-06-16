@@ -350,7 +350,7 @@ void detectAndDraw( Mat& img,
         ,
         Size(30, 30) );
     t = (double)cvGetTickCount() - t;
-    printf( "detection time = %g ms\n", t/((double)cvGetTickFrequency()*1000.) );
+    fprintf(stderr, "detection time = %g ms\n", t/((double)cvGetTickFrequency()*1000.) );
     for( vector<Rect>::const_iterator r = faces.begin(); r != faces.end(); r++, i++ )
     {
         Mat smallImgROI;
