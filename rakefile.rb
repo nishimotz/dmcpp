@@ -1,5 +1,6 @@
 #!/usr/bin/ruby -Ku
 # rakefile.rb
+# -*- coding: utf-8 -*-
 require "fileutils"
 GDM_JAR = "/usr/local/galatea-dialog/jar/gdm.jar"
 SRM_BIN = "/usr/local/galatea-engine/SRM/bin"
@@ -22,7 +23,7 @@ task :default do
 <rule id="all">
 <one-of>
 EOF
-    File.open("gram.txt").each do |s|
+    File.open("gram.txt", 'r:UTF-8').each do |s|
       s.chomp!
       a, b = s.split(/ /)
       if a != nil
