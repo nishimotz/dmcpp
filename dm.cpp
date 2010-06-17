@@ -351,6 +351,13 @@ void detectAndDraw( Mat& img,
         Size(30, 30) );
     t = (double)cvGetTickCount() - t;
     fprintf(stderr, "detection time = %g ms\n", t/((double)cvGetTickFrequency()*1000.) );
+    
+    if (faces.size() == 0) {
+      send("to @FSM set AgentEnable = DISABLE");
+    } else {
+      send("to @FSM set AgentEnable = ENABLE");
+    }
+
     for( vector<Rect>::const_iterator r = faces.begin(); r != faces.end(); r++, i++ )
     {
         Mat smallImgROI;
@@ -446,6 +453,9 @@ main(int argc, char *argv[])
   free( cv_threadp );
 
   FILE *dm_log_fp = fopen("_dm_log.txt", "w"); 
+
+  sleep(3);
+  send("to @AM-MCL set AutoMove = 1"); // enable face motion
 
   for (int n = 0 ; ; n++) {
     const int bufsize = 1000;
