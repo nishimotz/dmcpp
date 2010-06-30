@@ -5,6 +5,7 @@
  * based on 
  *  julius-simple.c (julius 4.1.5) by Akinobu Lee
  *  facedetect.cpp (http://sourceforge.net/projects/opencvlibrary/)
+ * 日本語文字コード UTF-8 
  */
 
 // julius-local
@@ -25,6 +26,8 @@ String nestedCascadeName =
 #include <cstdio>
 #include <time.h>
 #include <pthread.h>
+#include <iconv.h>
+#define ICONV_BUFSIZE 4096
 
 // -----------------------------------------------------------
 // thread management
@@ -57,6 +60,22 @@ tell(const char *msg)
 // -----------------------------------------------------------
 // speech recognition
 // -----------------------------------------------------------
+
+static char *
+to_utf(char *src)
+{
+  char orig_buf[ICONV_BUFSIZE];
+  static char buf[ICONV_BUFSIZE];
+  strcpy(orig_buf, src);
+  iconv_t m_iconv = iconv_open("UTF-8", "EUC-JP"); // tocode, fromcode
+  size_t in_size = (size_t)ICONV_BUFSIZE;
+  size_t out_size = (size_t)ICONV_BUFSIZE;
+  char *in = orig_buf;
+  char *out = buf;
+  iconv(m_iconv, &in, &in_size, &out, &out_size);
+  iconv_close(m_iconv);
+  return buf;
+}
 
 static void
 status_recready(Recog *recog, void *dummy)
@@ -104,6 +123,12 @@ output_result(Recog *recog, void *dummy)
   RecogProcess *r;
   HMM_Logical *p;
   SentenceAlign *align;
+  boolean multi;
+
+  if (recog->process_list->next != NULL) 
+    multi = TRUE;
+  else 
+    multi = FALSE;
 
   /* all recognition results are stored at each recognition process
      instance */
@@ -113,7 +138,7 @@ output_result(Recog *recog, void *dummy)
     if (! r->live) continue;
 
     /* result are in r->result.  See recog.h for details */
-
+    
     /* check result status */
     if (r->result.status < 0) {      /* no results obtained */
       /* outout message according to the status code */
@@ -141,6 +166,9 @@ output_result(Recog *recog, void *dummy)
       continue;
     }
 
+    fprintf(stderr, "\n");
+    fprintf(stderr, "search id:%d name:%s\n", r->config->id, r->config->name);
+
     /* output results for all the obtained sentences */
     winfo = r->lm->winfo;
 
@@ -153,25 +181,25 @@ output_result(Recog *recog, void *dummy)
       /* output word sequence like Julius */
       fprintf(stderr, "sentence%d:", n+1);
       for(i=0;i<seqnum;i++) 
-	fprintf(stderr, " %s", winfo->woutput[seq[i]]);
+	fprintf(stderr, " %s", to_utf(winfo->woutput[seq[i]]));
       fprintf(stderr, "\n");
 
       if (n == 0 and seqnum == 3) {
 	const int size = 1000;
 	char buf[size];
-	sprintf(buf, "to @AM-MCL set Speak = %sですね", winfo->woutput[seq[1]]);
+	sprintf(buf, "to @AM-MCL set Speak = %s", to_utf(winfo->woutput[seq[1]]));
 	send(buf);
       }
 
       /* LM entry sequence */
       fprintf(stderr, "wseq%d:", n+1);
       for(i=0;i<seqnum;i++) 
-	fprintf(stderr, " %s", winfo->wname[seq[i]]);
+	fprintf(stderr, " %s", to_utf(winfo->wname[seq[i]]));
       fprintf(stderr, "\n");
       /* phoneme sequence */
       fprintf(stderr, "phseq%d:", n+1);
       put_hypo_phoneme(seq, seqnum, winfo);
-      fprintf(stderr, "\n");
+      //fprintf(stderr, "\n");
       /* confidence scores */
       fprintf(stderr, "cmscore%d:", n+1);
       for (i=0;i<seqnum; i++) 
@@ -205,7 +233,7 @@ msock_word_out1(WORD_ID w, RecogProcess *r)
 
   winfo = r->lm->winfo;
 
-  fprintf(stderr, " WORD=\"%s\"", winfo->woutput[w]);
+  fprintf(stderr, " WORD=\"%s\"", to_utf(winfo->woutput[w]));
   fprintf(stderr, " CLASSID=\"%s\"", winfo->wname[w]);
   fprintf(stderr, " PHONE=\"");
     for(j=0;j<winfo->wlen[w];j++) {
@@ -269,6 +297,7 @@ void *julius_worker( void *my_workorderp )
   char conf_file_name[] = "julius.conf";
   jconf = j_config_load_file_new(conf_file_name);
   if (jconf == NULL) {
+    fprintf(stderr, "error in j_config_load_file_new\n");
     tell("error in j_config_load_file_new");
     return NULL;
   }
@@ -350,7 +379,7 @@ void detectAndDraw( Mat& img,
         ,
         Size(30, 30) );
     t = (double)cvGetTickCount() - t;
-    fprintf(stderr, "detection time = %g ms\n", t/((double)cvGetTickFrequency()*1000.) );
+    // fprintf(stderr, "detection time = %g ms\n", t/((double)cvGetTickFrequency()*1000.) );
     
     if (faces.size() == 0) {
       send("to @FSM set AgentEnable = DISABLE");

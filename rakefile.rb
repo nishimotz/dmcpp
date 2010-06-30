@@ -4,13 +4,15 @@
 require "fileutils"
 GDM_JAR = "/usr/local/galatea-dialog/jar/gdm.jar"
 SRM_BIN = "/usr/local/galatea-engine/SRM/bin"
+
+ENCODING = "EUC-JP" # "UTF-8"
  
 task :version do
   sh "java -cp #{GDM_JAR} galatea.io.julius.GrammarMaker"
 end
  
 task :default do
-  opt = "-d #{SRM_BIN} -e utf-8"
+  opt = "-d #{SRM_BIN} -e #{ENCODING}"
   gram = "_gram.xml"
   dest = "gram/gram"
   #
@@ -18,7 +20,7 @@ task :default do
  
   File.open(gram, "w") do |f|
     f.puts <<-EOF
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <grammar root="#all">
 <rule id="all">
 <one-of>
