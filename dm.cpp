@@ -20,7 +20,7 @@ using namespace cv;
 String cascadeName =
 "/usr/local/share/opencv/haarcascades/haarcascade_frontalface_alt.xml";
 String nestedCascadeName =
-"/usr/local/share/opencv/haarcascades/haarcascade_eye_tree_eyeglasses.xml";
+"/usr/local/share/opencv/haarcascades/haarcascade_mcs_eyepair_small.xml";
 
 #include <iostream>
 #include <cstdio>
@@ -370,15 +370,16 @@ void detectAndDraw( Mat& img,
     resize( gray, smallImg, smallImg.size(), 0, 0, INTER_LINEAR );
     equalizeHist( smallImg, smallImg );
 
-    t = (double)cvGetTickCount();
+    t = (double)cvGetTickCount(); 
     cascade.detectMultiScale( smallImg, faces,
         1.1, 2, 0
-        //|CV_HAAR_FIND_BIGGEST_OBJECT
+        |CV_HAAR_FIND_BIGGEST_OBJECT
         //|CV_HAAR_DO_ROUGH_SEARCH
         |CV_HAAR_SCALE_IMAGE
         ,
         Size(30, 30) );
-    t = (double)cvGetTickCount() - t;
+
+   t = (double)cvGetTickCount() - t;
     // fprintf(stderr, "detection time = %g ms\n", t/((double)cvGetTickFrequency()*1000.) );
     
     if (faces.size() == 0) {
@@ -403,20 +404,25 @@ void detectAndDraw( Mat& img,
         smallImgROI = smallImg(*r);
         nestedCascade.detectMultiScale( smallImgROI, nestedObjects,
             1.1, 2, 0
-            //|CV_HAAR_FIND_BIGGEST_OBJECT
+   	    |CV_HAAR_FIND_BIGGEST_OBJECT
             //|CV_HAAR_DO_ROUGH_SEARCH
             //|CV_HAAR_DO_CANNY_PRUNING
             |CV_HAAR_SCALE_IMAGE
             ,
-            Size(30, 30) );
+	Size( 3, 3 ));
         for( vector<Rect>::const_iterator nr = nestedObjects.begin(); nr != nestedObjects.end(); nr++ )
         {
             center.x = cvRound((r->x + nr->x + nr->width*0.5)*scale);
             center.y = cvRound((r->y + nr->y + nr->height*0.5)*scale);
             radius = cvRound((nr->width + nr->height)*0.25*scale);
-            circle( img, center, radius, color, 3, 8, 0 );
+            //circle( img, center, radius, color, 3, 8, 0 );
+	    Point p1, p2;
+	    p1.x = (r->x + nr->x)*scale; p2.x = p1.x + nr->width * scale;
+	    p1.y = (r->y + nr->y)*scale; p2.y = p1.y + nr->height * scale;
+            rectangle( img, p1, p2, color, 3);
         }
     }  
+
     cv::imshow( "opencv result", img );    
 }
 
@@ -431,6 +437,7 @@ void *cv_worker( void *my_workorderp )
   }
   if( !nestedCascade.load( nestedCascadeName ) ) {
     cerr << "WARNING: Could not load classifier cascade for nested objects" << endl;
+    return NULL;
   }
   double scale = 4;
   CvCapture* capture = cvCaptureFromCAM(0);

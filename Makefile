@@ -5,13 +5,16 @@ L2= `libjulius-config --cflags --libs`
 L3= `libsent-config --cflags --libs` 
 CFLAGS= -g -O2
 
-all: dm gram
+all: dm gram adinpost.jpi
 
 dm: dm.cpp
 	$(CC) $(CFLAGS) -o dm dm.cpp $(L1) $(L2) $(L3)
 
 gram: gram.txt
 	rake
+
+adinpost.jpi: adinpost.cpp
+	$(CC) $(CFLAGS) -shared -o adinpost.jpi adinpost.cpp $(L2) $(L3)
 
 clean:
 	$(RM) *.o *.bak *~ core TAGS
