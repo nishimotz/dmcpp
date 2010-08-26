@@ -494,7 +494,7 @@ main(int argc, char *argv[])
   send("to @AM-MCL set AutoMove = 1"); // enable face motion
 
   for (int n = 0 ; ; n++) {
-    const int bufsize = 1000;
+    const int bufsize = 100000;
     char ibuf[bufsize], obuf[bufsize];
     char *ret = fgets( ibuf, bufsize, stdin );
     chomp(ibuf);
