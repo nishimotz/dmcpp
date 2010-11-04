@@ -1,6 +1,8 @@
 /**
- * dm.cpp
- * 2010-06 by Takuya Nishimoto
+ * dm.cpp for galatea dialog studio
+ * since 2010-06 
+ * by Takuya Nishimoto
+ * contributed by Hiroki Deguchi, Lu Di
  * http://ja.nishimotz.com/project:dmcpp
  * based on 
  *  julius-simple.c (julius 4.1.5) by Akinobu Lee
@@ -26,8 +28,8 @@ String nestedCascadeName =
 #include <cstdio>
 #include <time.h>
 #include <pthread.h>
-#include <iconv.h>
-#define ICONV_BUFSIZE 4096
+
+#include "util.cpp"
 
 // -----------------------------------------------------------
 // thread management
@@ -60,22 +62,6 @@ tell(const char *msg)
 // -----------------------------------------------------------
 // speech recognition
 // -----------------------------------------------------------
-
-static char *
-to_utf(char *src)
-{
-  char orig_buf[ICONV_BUFSIZE];
-  static char buf[ICONV_BUFSIZE];
-  strcpy(orig_buf, src);
-  iconv_t m_iconv = iconv_open("UTF-8", "EUC-JP"); // tocode, fromcode
-  size_t in_size = (size_t)ICONV_BUFSIZE;
-  size_t out_size = (size_t)ICONV_BUFSIZE;
-  char *in = orig_buf;
-  char *out = buf;
-  iconv(m_iconv, &in, &in_size, &out, &out_size);
-  iconv_close(m_iconv);
-  return buf;
-}
 
 static void
 status_recready(Recog *recog, void *dummy)
@@ -452,8 +438,15 @@ void *cv_worker( void *my_workorderp )
     else
       flip( frame, frameCopy, 0 );
     detectAndDraw( frameCopy, cascade, nestedCascade, scale );
+#if 0
     if( waitKey( 10 ) >= 0 )
       goto _cleanup_;
+#else
+    int k = waitKey( 10 );
+    if( k >= 0 ) {
+      cerr << "key " << k << " pressed" << endl;
+    }
+#endif
   }
   waitKey(0);
  _cleanup_:
@@ -462,18 +455,11 @@ void *cv_worker( void *my_workorderp )
 
 // -----------------------------------------------------------
 
-void 
-chomp(char *s)
-{
-  char *p;
-  while (s != NULL && (p = strrchr(s, '\n')) != NULL) {
-    *p = '\0';
-  }
-}
-
 int
 main(int argc, char *argv[])
 {
+  sleep(3);
+
   workorder_t *workorderp; // TODO: initialize
 
   pthread_t *julius_threadp;
@@ -490,8 +476,9 @@ main(int argc, char *argv[])
 
   FILE *dm_log_fp = fopen("_dm_log.txt", "w"); 
 
-  sleep(3);
   send("to @AM-MCL set AutoMove = 1"); // enable face motion
+  send("to @AM-MCL set Emotion = HAPPY");
+  send("to @AM-MCL set Speak = こんにちは。これは長いメッセージです。");
 
   for (int n = 0 ; ; n++) {
     const int bufsize = 100000;
@@ -500,6 +487,9 @@ main(int argc, char *argv[])
     chomp(ibuf);
     sprintf(obuf, "%d %s", n, ibuf);
     // tell(buf);
+    if (starts_with(ibuf, "From @SSM rep Speak.stat = IDLE")) { 
+      fprintf(stderr, "%s\n", ibuf); fflush(stderr);
+    }
     fprintf(dm_log_fp, "%s\n", obuf); 
     fflush(dm_log_fp);
   }
