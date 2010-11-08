@@ -64,3 +64,10 @@ void Application::tell(const char *msg)
   fflush(stdout);
 }
 
+void Application::onSpeechRecognized(char *word)
+{
+  const int size = 1000;
+  char buf[size];
+  sprintf(buf, "to @AM-MCL set Speak = %s", word);
+  this->send(buf);
+}

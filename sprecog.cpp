@@ -107,10 +107,13 @@ void output_result(Recog *recog, void *app_)
       fprintf(stderr, "\n");
 
       if (n == 0 and seqnum == 3) {
+#if 0
 	const int size = 1000;
 	char buf[size];
 	sprintf(buf, "to @AM-MCL set Speak = %s", to_utf(winfo->woutput[seq[1]]));
 	app->send(buf);
+#endif
+	app->onSpeechRecognized(to_utf(winfo->woutput[seq[1]]));
       }
 
       /* LM entry sequence */
@@ -157,15 +160,15 @@ void msock_word_out1(WORD_ID w, RecogProcess *r)
   fprintf(stderr, " WORD=\"%s\"", to_utf(winfo->woutput[w]));
   fprintf(stderr, " CLASSID=\"%s\"", winfo->wname[w]);
   fprintf(stderr, " PHONE=\"");
-    for(j=0;j<winfo->wlen[w];j++) {
-      /* libsent/src/hmminfo/cdhmm.c */ 
-      center_name(winfo->wseq[w][j]->name, buf);
-      if (j == 0) 
-	fprintf(stderr, "%s", buf);
-      else 
-	fprintf(stderr, " %s", buf);
-    }
-    fprintf(stderr, "\"");
+  for(j=0;j<winfo->wlen[w];j++) {
+    /* libsent/src/hmminfo/cdhmm.c */ 
+    center_name(winfo->wseq[w][j]->name, buf);
+    if (j == 0) 
+      fprintf(stderr, "%s", buf);
+    else 
+      fprintf(stderr, " %s", buf);
+  }
+  fprintf(stderr, "\"");
 }
 
 void result_pass1_current(Recog *recog, void *app_)
@@ -178,8 +181,10 @@ void result_pass1_current(Recog *recog, void *app_)
   RecogProcess *r;
   boolean multi;
 
-  if (recog->process_list->next != NULL) multi = TRUE;
-  else multi = FALSE;
+  if (recog->process_list->next != NULL) 
+    multi = TRUE;
+  else 
+    multi = FALSE;
 
   for(r=recog->process_list;r;r=r->next) {
     if (! r->live) continue;

@@ -30,6 +30,7 @@ class Application {
   thread_info_t m_thread_info;
   void send(const char *msg);
   void tell(const char *msg);
+  void onSpeechRecognized(char *word);
 };
 
 #endif
