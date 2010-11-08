@@ -204,6 +204,7 @@ void result_pass1_current(Recog *recog, void *app_)
   }
 }
 
+#if 0
 void add_callbacks(Recog *recog, Application *app)
 {
   callback_add(recog, CALLBACK_EVENT_SPEECH_READY, status_recready, (void *)app);
@@ -211,6 +212,15 @@ void add_callbacks(Recog *recog, Application *app)
   callback_add(recog, CALLBACK_RESULT, output_result, (void *)app);
   callback_add(recog, CALLBACK_RESULT_PASS1_INTERIM, result_pass1_current, (void *)app);
 }
+#else
+void SpRecog::addCallbacks(Application *app)
+{
+  ::callback_add(this->recog, CALLBACK_EVENT_SPEECH_READY, status_recready, (void *)app);
+  ::callback_add(this->recog, CALLBACK_EVENT_SPEECH_START, status_recstart, (void *)app);
+  ::callback_add(this->recog, CALLBACK_RESULT, output_result, (void *)app);
+  ::callback_add(this->recog, CALLBACK_RESULT_PASS1_INTERIM, result_pass1_current, (void *)app);
+}
+#endif
 
 void SpRecog::openLogFile()
 {

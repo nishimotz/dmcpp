@@ -9,7 +9,7 @@ void status_recready(Recog *recog, void *app_);
 void status_recstart(Recog *recog, void *app_);
 void output_result(Recog *recog, void *app_);
 void result_pass1_current(Recog *recog, void *app_);
-void add_callbacks(Recog *recog, Application *app);
+//void add_callbacks(Recog *recog, Application *app);
 
 class SpRecog {
  public:
@@ -20,6 +20,10 @@ class SpRecog {
 
   void openLogFile();
   bool loadConfigFile(Application *app);
+  void addCallbacks(Application *app);
+  //  void addCallbacks(Application *app) {
+  //    add_callbacks(this->recog, app);
+  //  }
   bool start(Application *app);
   void close();
 };

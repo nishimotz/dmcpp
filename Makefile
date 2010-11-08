@@ -1,15 +1,12 @@
 CC=g++
 
-C1= `pkg-config --cflags opencv` 
-C2= `libjulius-config --cflags` 
-C3= `libsent-config --cflags` 
-# L1= `pkg-config --cflags --libs opencv` 
-# L2= `libjulius-config --cflags --libs` 
-# L3= `libsent-config --cflags --libs` 
-L1= `pkg-config --libs opencv` 
-L2= `libjulius-config --libs` 
-L3= `libsent-config --libs` 
-CFLAGS= -g -O2
+C1 = `pkg-config --cflags opencv` 
+C2 = `libjulius-config --cflags` 
+C3 = `libsent-config --cflags` 
+L1 = `pkg-config --libs opencv` 
+L2 = `libjulius-config --libs` 
+L3 = `libsent-config --libs` 
+CFLAGS = -g -O2
 OBJS = application.o facerecog.o sprecog.o dm.o
 
 all: dm gram adinpost.jpi

@@ -22,37 +22,8 @@ void *julius_worker( void *my_workorderp )
 {
   spRecog->openLogFile();
   spRecog->loadConfigFile(app);
-
-  add_callbacks(spRecog->recog, app);
-#if 0
-  if (j_adin_init(spRecog->recog) == FALSE) {    
-    app->tell("error in j_adin_init");
-    return NULL;
-  }
-
-  j_recog_info(spRecog->recog); /* output system information to log */
-
-  switch(j_open_stream(spRecog->recog, NULL)) {
-  case 0:			
-    app->tell("ok j_open_stream");
-    break;
-  case -1:      		
-    app->tell("error in input stream");
-    return NULL;
-  case -2:
-    app->tell("error in beginning input");
-    return NULL;
-  }
-  fflush(spRecog->srm_log_fp);
-
-  int ret = j_recognize_stream(spRecog->recog);
-  if (ret == -1) {
-    app->tell("error j_recognize_stream");
-    return NULL;
-  }
-#else
+  spRecog->addCallbacks(app);
   spRecog->start(app);
-#endif
   spRecog->close();
   return NULL;
 }
