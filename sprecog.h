@@ -4,6 +4,10 @@
 // depends on : julius-local package 
 #include <julius/juliuslib.h>
 
+class SpRecog {
+
+};
+
 #endif
 
 

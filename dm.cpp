@@ -21,6 +21,7 @@
 
 // static thread_info_t m_thread_info;
 static Application *app = new Application();
+static FaceRecog *faceRecog = new FaceRecog();
 
 // -----------------------------------------------------------
 // speech recognition
@@ -378,7 +379,7 @@ void detectAndDraw( Mat& img,
 void *cv_worker( void *my_workorderp )
 {
   workorder_t *workorderp = (workorder_t *)my_workorderp;
-  Mat frame, frameCopy;
+#if 0
   CascadeClassifier cascade, nestedCascade;
   if( !cascade.load( cascadeName ) ) {
     cerr << "ERROR: Could not load classifier cascade" << endl;
@@ -388,11 +389,15 @@ void *cv_worker( void *my_workorderp )
     cerr << "WARNING: Could not load classifier cascade for nested objects" << endl;
     return NULL;
   }
+#else
+  faceRecog->loadModels();
+#endif
   double scale = 4;
   CvCapture* capture = cvCaptureFromCAM(0);
   cvNamedWindow( "opencv result", 1 );
   for(;;) {
     IplImage* iplImg = cvQueryFrame( capture );
+    Mat frame, frameCopy;
     frame = iplImg;
     if( frame.empty() )
       break;
@@ -400,16 +405,12 @@ void *cv_worker( void *my_workorderp )
       frame.copyTo( frameCopy );
     else
       flip( frame, frameCopy, 0 );
-    detectAndDraw( frameCopy, cascade, nestedCascade, scale );
-#if 0
-    if( waitKey( 10 ) >= 0 )
-      goto _cleanup_;
-#else
+    detectAndDraw( frameCopy, faceRecog->cascade, faceRecog->nestedCascade, scale );
     int k = waitKey( 10 );
     if( k >= 0 ) {
       cerr << "key " << k << " pressed" << endl;
+      // goto _cleanup_;
     }
-#endif
   }
   waitKey(0);
  _cleanup_:
