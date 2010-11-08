@@ -10,19 +10,8 @@
  * 日本語文字コード UTF-8 
  */
 
-// julius-local
-#include <julius/juliuslib.h>
-
-// opencv-local
-#include <cv.h>
-#include <highgui.h>
-using namespace std;
-using namespace cv;
-
-String cascadeName =
-"/usr/local/share/opencv/haarcascades/haarcascade_frontalface_alt.xml";
-String nestedCascadeName =
-"/usr/local/share/opencv/haarcascades/haarcascade_mcs_eyepair_small.xml";
+#include "facerecog.h"
+#include "sprecog.h"
 
 #include <iostream>
 #include <cstdio>
