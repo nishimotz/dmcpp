@@ -7,8 +7,11 @@ CFLAGS= -g -O2
 
 all: dm gram adinpost.jpi
 
-dm: dm.cpp
-	$(CC) $(CFLAGS) -o dm dm.cpp $(L1) $(L2) $(L3)
+dm: dm.cpp application.o
+	$(CC) $(CFLAGS) -o dm dm.cpp $(L1) $(L2) $(L3) application.o
+
+application.o: application.cpp
+	$(CC) $(CFLAGS) -c application.cpp 
 
 gram: gram.txt
 	rake

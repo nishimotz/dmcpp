@@ -10,43 +10,17 @@
  * 日本語文字コード UTF-8 
  */
 
+#include "application.h"
 #include "facerecog.h"
 #include "sprecog.h"
-
-#include <iostream>
-#include <cstdio>
-#include <time.h>
-#include <pthread.h>
-
-#include "util.cpp"
+// #include "util.cpp"
 
 // -----------------------------------------------------------
 // thread management
 // -----------------------------------------------------------
 
-typedef struct workorder {
-  void *dummy;
-} workorder_t;
-
-typedef struct {
-  int dummy;
-} thread_info_t;
-
-static thread_info_t m_thread_info;
-
-static void 
-send(const char *msg)
-{
-  printf("%s\n", msg);
-  fflush(stdout);
-}
-
-static void 
-tell(const char *msg)
-{
-  printf("tell %s\n", msg);
-  fflush(stdout);
-}
+// static thread_info_t m_thread_info;
+static Application *app = new Application();
 
 // -----------------------------------------------------------
 // speech recognition
@@ -55,13 +29,13 @@ tell(const char *msg)
 static void
 status_recready(Recog *recog, void *dummy)
 {
-  tell("recready");
+  app->tell("recready");
 }
 
 static void
 status_recstart(Recog *recog, void *dummy)
 {
-  tell("recstart");
+  app->tell("recstart");
 }
 
 static void
@@ -163,7 +137,7 @@ output_result(Recog *recog, void *dummy)
 	const int size = 1000;
 	char buf[size];
 	sprintf(buf, "to @AM-MCL set Speak = %s", to_utf(winfo->woutput[seq[1]]));
-	send(buf);
+	app->send(buf);
       }
 
       /* LM entry sequence */
@@ -273,13 +247,13 @@ void *julius_worker( void *my_workorderp )
   jconf = j_config_load_file_new(conf_file_name);
   if (jconf == NULL) {
     fprintf(stderr, "error in j_config_load_file_new\n");
-    tell("error in j_config_load_file_new");
+    app->tell("error in j_config_load_file_new");
     return NULL;
   }
   
   recog = j_create_instance_from_jconf(jconf);
   if (recog == NULL) {
-    tell("error in j_create_instance_from_jconf");
+    app->tell("error in j_create_instance_from_jconf");
     return NULL;
   }
 
@@ -289,7 +263,7 @@ void *julius_worker( void *my_workorderp )
   callback_add(recog, CALLBACK_RESULT_PASS1_INTERIM, result_pass1_current, NULL);
 
   if (j_adin_init(recog) == FALSE) {    
-    tell("error in j_adin_init");
+    app->tell("error in j_adin_init");
     return NULL;
   }
 
@@ -297,20 +271,20 @@ void *julius_worker( void *my_workorderp )
 
   switch(j_open_stream(recog, NULL)) {
   case 0:			
-    tell("ok j_open_stream");
+    app->tell("ok j_open_stream");
     break;
   case -1:      		
-    tell("error in input stream");
+    app->tell("error in input stream");
     return NULL;
   case -2:
-    tell("error in beginning input");
+    app->tell("error in beginning input");
     return NULL;
   }
   fflush(srm_log_fp);
 
   int ret = j_recognize_stream(recog);
   if (ret == -1) {
-    tell("error j_recognize_stream");
+    app->tell("error j_recognize_stream");
     return NULL;
   }
 
@@ -358,9 +332,9 @@ void detectAndDraw( Mat& img,
     // fprintf(stderr, "detection time = %g ms\n", t/((double)cvGetTickFrequency()*1000.) );
     
     if (faces.size() == 0) {
-      send("to @FSM set AgentEnable = DISABLE");
+      app->send("to @FSM set AgentEnable = DISABLE");
     } else {
-      send("to @FSM set AgentEnable = ENABLE");
+      app->send("to @FSM set AgentEnable = ENABLE");
     }
 
     for( vector<Rect>::const_iterator r = faces.begin(); r != faces.end(); r++, i++ )
@@ -465,9 +439,9 @@ main(int argc, char *argv[])
 
   FILE *dm_log_fp = fopen("_dm_log.txt", "w"); 
 
-  send("to @AM-MCL set AutoMove = 1"); // enable face motion
-  send("to @AM-MCL set Emotion = HAPPY");
-  send("to @AM-MCL set Speak = こんにちは。これは長いメッセージです。");
+  app->send("to @AM-MCL set AutoMove = 1"); // enable face motion
+  app->send("to @AM-MCL set Emotion = HAPPY");
+  app->send("to @AM-MCL set Speak = こんにちは。これは長いメッセージです。");
 
   for (int n = 0 ; ; n++) {
     const int bufsize = 100000;
@@ -475,7 +449,7 @@ main(int argc, char *argv[])
     char *ret = fgets( ibuf, bufsize, stdin );
     chomp(ibuf);
     sprintf(obuf, "%d %s", n, ibuf);
-    // tell(buf);
+    // app->tell(buf);
     if (starts_with(ibuf, "From @SSM rep Speak.stat = IDLE")) { 
       fprintf(stderr, "%s\n", ibuf); fflush(stderr);
     }

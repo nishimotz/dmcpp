@@ -1,7 +1,8 @@
-#if 0
 /*
- * util.cpp 
+ * application.cpp 
  */
+
+#include "application.h"
 
 void chomp(char *s)
 {
@@ -41,4 +42,15 @@ uint64_t get_milli_time()
   return (uint64_t)(t.time) * 1000 + t.millitm;
 }
 
-#endif
+void Application::send(const char *msg)
+{
+  printf("%s\n", msg);
+  fflush(stdout);
+}
+
+void Application::tell(const char *msg)
+{
+  printf("tell %s\n", msg);
+  fflush(stdout);
+}
+
