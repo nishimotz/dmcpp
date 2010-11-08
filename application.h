@@ -28,9 +28,16 @@ void create_and_detach_thread(workorder_t *workorderp, void *(*worker)(void *));
 class Application {
  public:
   thread_info_t m_thread_info;
+  FILE *dm_log_fp;
+  bool agentSpeaking;
   void send(const char *msg);
   void tell(const char *msg);
-  void onSpeechRecognized(char *word);
+  void onSpeechRecognized(const char *word);
+  void agentSpeak(const char *sent);
+  void iteration();
+  void openLogFile();
+  void closeLogFile();
+  Application();
 };
 
 #endif

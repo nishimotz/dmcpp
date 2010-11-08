@@ -4,6 +4,7 @@
 
 #include "application.h"
 #include <cstdlib>
+#include <string>
 
 void chomp(char *s)
 {
@@ -64,10 +65,52 @@ void Application::tell(const char *msg)
   fflush(stdout);
 }
 
-void Application::onSpeechRecognized(char *word)
+void Application::agentSpeak(const char *sent)
 {
   const int size = 1000;
   char buf[size];
-  sprintf(buf, "to @AM-MCL set Speak = %s", word);
+  sprintf(buf, "to @AM-MCL set Speak = %s", sent);
   this->send(buf);
+  this->agentSpeaking = true;
+}
+
+void Application::onSpeechRecognized(const char *word)
+{
+  std::string str;
+  str = "あなたは";
+  str += word;
+  str += "と言いました。";
+  this->agentSpeak(str.c_str());
+}
+
+void Application::openLogFile()
+{
+  this->dm_log_fp = fopen("_dm_log.txt", "w"); 
+}
+
+void Application::closeLogFile()
+{
+  fclose(this->dm_log_fp);
+}
+
+void Application::iteration()
+{
+  const int bufsize = 100000;
+  static int n = 0;
+  char ibuf[bufsize], obuf[bufsize];
+  char *ret = fgets( ibuf, bufsize, stdin );
+  chomp(ibuf);
+  sprintf(obuf, "%d %s", n, ibuf);
+  if (starts_with(ibuf, "From @SSM rep Speak.stat = IDLE")) { 
+    fprintf(stderr, "%s\n", ibuf); fflush(stderr);
+    this->agentSpeaking = false;
+  }
+  fprintf(this->dm_log_fp, "%s\n", obuf); 
+  fflush(this->dm_log_fp);
+  n++;
+}
+
+Application::Application()
+{
+  this->agentSpeaking = false;
 }

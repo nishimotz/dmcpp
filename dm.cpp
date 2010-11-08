@@ -28,10 +28,9 @@ void *julius_worker( void *my_workorderp )
   return NULL;
 }
 
-
 void *cv_worker( void *my_workorderp )
 {
-  workorder_t *workorderp = (workorder_t *)my_workorderp;
+  // workorder_t *workorderp = (workorder_t *)my_workorderp;
   faceRecog->loadModels();
   double scale = 4;
   CvCapture* capture = cvCaptureFromCAM(0);
@@ -53,21 +52,18 @@ void *cv_worker( void *my_workorderp )
       app->send("to @FSM set AgentEnable = ENABLE");
     }
     cv::imshow( "opencv result", frameCopy );    
-    int k = waitKey( 10 );
+    int k = cv::waitKey( 10 );
     if( k >= 0 ) {
       cerr << "key " << k << " pressed" << endl;
       // goto _cleanup_;
     }
   }
-  waitKey(0);
+  cv::waitKey(0);
  _cleanup_:
   cvReleaseCapture( &capture );
 }
 
-// -----------------------------------------------------------
-
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
   sleep(3);
 
@@ -76,24 +72,13 @@ main(int argc, char *argv[])
   create_and_detach_thread(workorderp, julius_worker);
   create_and_detach_thread(workorderp, cv_worker);
 
-  FILE *dm_log_fp = fopen("_dm_log.txt", "w"); 
-
+  app->openLogFile();
   app->send("to @AM-MCL set AutoMove = 1"); // enable face motion
   app->send("to @AM-MCL set Emotion = HAPPY");
-  app->send("to @AM-MCL set Speak = こんにちは。これは長いメッセージです。");
+  app->agentSpeak("こんにちは。これは長いメッセージです。");
 
-  for (int n = 0 ; ; n++) {
-    const int bufsize = 100000;
-    char ibuf[bufsize], obuf[bufsize];
-    char *ret = fgets( ibuf, bufsize, stdin );
-    chomp(ibuf);
-    sprintf(obuf, "%d %s", n, ibuf);
-    // app->tell(buf);
-    if (starts_with(ibuf, "From @SSM rep Speak.stat = IDLE")) { 
-      fprintf(stderr, "%s\n", ibuf); fflush(stderr);
-    }
-    fprintf(dm_log_fp, "%s\n", obuf); 
-    fflush(dm_log_fp);
+  while (true) {
+    app->iteration();
   }
   return(0);
 }

@@ -281,5 +281,5 @@ void SpRecog::close()
 {
   j_close_stream(recog);
   j_recog_free(recog);
-  free(workorderp);
+  // free(workorderp);
 }
