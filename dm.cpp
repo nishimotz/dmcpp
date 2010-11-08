@@ -300,9 +300,11 @@ void *julius_worker( void *my_workorderp )
 // face detection
 // -----------------------------------------------------------
 void detectAndDraw( Mat& img,
-                   CascadeClassifier& cascade, CascadeClassifier& nestedCascade,
-                   double scale)
+		    FaceRecog *faceRecog,
+		    double scale)
 {
+  CascadeClassifier cascade = faceRecog->cascade;
+  CascadeClassifier nestedCascade = faceRecog->cascade;
     int i = 0;
     double t = 0;
     vector<Rect> faces;
@@ -373,25 +375,13 @@ void detectAndDraw( Mat& img,
         }
     }  
 
-    cv::imshow( "opencv result", img );    
+    //cv::imshow( "opencv result", img );    
 }
 
 void *cv_worker( void *my_workorderp )
 {
   workorder_t *workorderp = (workorder_t *)my_workorderp;
-#if 0
-  CascadeClassifier cascade, nestedCascade;
-  if( !cascade.load( cascadeName ) ) {
-    cerr << "ERROR: Could not load classifier cascade" << endl;
-    return NULL;
-  }
-  if( !nestedCascade.load( nestedCascadeName ) ) {
-    cerr << "WARNING: Could not load classifier cascade for nested objects" << endl;
-    return NULL;
-  }
-#else
   faceRecog->loadModels();
-#endif
   double scale = 4;
   CvCapture* capture = cvCaptureFromCAM(0);
   cvNamedWindow( "opencv result", 1 );
@@ -405,7 +395,9 @@ void *cv_worker( void *my_workorderp )
       frame.copyTo( frameCopy );
     else
       flip( frame, frameCopy, 0 );
-    detectAndDraw( frameCopy, faceRecog->cascade, faceRecog->nestedCascade, scale );
+    //    detectAndDraw( frameCopy, faceRecog->cascade, faceRecog->nestedCascade, scale );
+    detectAndDraw( frameCopy, faceRecog, scale );
+    cv::imshow( "opencv result", frameCopy );    
     int k = waitKey( 10 );
     if( k >= 0 ) {
       cerr << "key " << k << " pressed" << endl;
