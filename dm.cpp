@@ -13,11 +13,6 @@
 #include "application.h"
 #include "facerecog.h"
 #include "sprecog.h"
-// #include "util.cpp"
-
-// -----------------------------------------------------------
-// thread management
-// -----------------------------------------------------------
 
 static Application *app = new Application();
 static FaceRecog *faceRecog = new FaceRecog();
@@ -25,16 +20,11 @@ static SpRecog *spRecog = new SpRecog();
 
 void *julius_worker( void *my_workorderp )
 {
-#if 0
-  workorder_t *workorderp = (workorder_t *)my_workorderp;
-  Jconf *jconf; // Julius configuration parameter holder
-  Recog *recog; // Julius recognition instance
-  FILE *srm_log_fp; 
-#endif
   spRecog->openLogFile();
   spRecog->loadConfigFile(app);
 
   add_callbacks(spRecog->recog, app);
+#if 0
   if (j_adin_init(spRecog->recog) == FALSE) {    
     app->tell("error in j_adin_init");
     return NULL;
@@ -60,6 +50,9 @@ void *julius_worker( void *my_workorderp )
     app->tell("error j_recognize_stream");
     return NULL;
   }
+#else
+  spRecog->start(app);
+#endif
   spRecog->close();
   return NULL;
 }

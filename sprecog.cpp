@@ -235,6 +235,33 @@ bool SpRecog::loadConfigFile(Application *app)
   return true;
 }
 
+bool SpRecog::start(Application *app)
+{
+  if (j_adin_init(this->recog) == FALSE) {    
+    app->tell("error in j_adin_init");
+    return false;
+  }
+  j_recog_info(this->recog); /* output system information to log */
+  switch(j_open_stream(this->recog, NULL)) {
+  case 0:			
+    app->tell("ok j_open_stream");
+    break;
+  case -1:      		
+    app->tell("error in input stream");
+    return false;
+  case -2:
+    app->tell("error in beginning input");
+    return false;
+  }
+  fflush(this->srm_log_fp);
+  int ret = j_recognize_stream(this->recog);
+  if (ret == -1) {
+    app->tell("error j_recognize_stream");
+    return false;
+  }
+  return true;
+}
+
 void SpRecog::close()
 {
   j_close_stream(recog);

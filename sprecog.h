@@ -20,6 +20,7 @@ class SpRecog {
 
   void openLogFile();
   bool loadConfigFile(Application *app);
+  bool start(Application *app);
   void close();
 };
 
