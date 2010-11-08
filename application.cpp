@@ -3,6 +3,7 @@
  */
 
 #include "application.h"
+#include <cstdlib>
 
 void chomp(char *s)
 {
@@ -40,6 +41,15 @@ uint64_t get_milli_time()
   struct timeb t;
   ftime(&t);
   return (uint64_t)(t.time) * 1000 + t.millitm;
+}
+
+void create_and_detach_thread(workorder_t *workorderp, void *(*worker)(void *))
+{
+  pthread_t *my_threadp;
+  my_threadp = (pthread_t *) malloc(sizeof(pthread_t));
+  pthread_create( my_threadp, NULL, worker, (void *) workorderp );
+  pthread_detach( *my_threadp );
+  free( my_threadp );
 }
 
 void Application::send(const char *msg)

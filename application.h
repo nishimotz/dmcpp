@@ -23,6 +23,7 @@ void chomp(char *s);
 bool starts_with(const char *str, const char *pat);
 char *to_utf(char *src);
 uint64_t get_milli_time();
+void create_and_detach_thread(workorder_t *workorderp, void *(*worker)(void *));
 
 class Application {
  public:

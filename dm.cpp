@@ -341,17 +341,8 @@ main(int argc, char *argv[])
 
   workorder_t *workorderp; // TODO: initialize
 
-  pthread_t *julius_threadp;
-  julius_threadp = (pthread_t *) malloc(sizeof(pthread_t));
-  pthread_create( julius_threadp, NULL, julius_worker, (void *) workorderp );
-  pthread_detach( *julius_threadp );
-  free( julius_threadp );
-
-  pthread_t *cv_threadp;
-  cv_threadp = (pthread_t *) malloc(sizeof(pthread_t));
-  pthread_create( cv_threadp, NULL, cv_worker, (void *) workorderp );
-  pthread_detach( *cv_threadp );
-  free( cv_threadp );
+  create_and_detach_thread(workorderp, julius_worker);
+  create_and_detach_thread(workorderp, cv_worker);
 
   FILE *dm_log_fp = fopen("_dm_log.txt", "w"); 
 
