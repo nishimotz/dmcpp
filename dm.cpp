@@ -299,6 +299,7 @@ void *julius_worker( void *my_workorderp )
 // -----------------------------------------------------------
 // face detection
 // -----------------------------------------------------------
+#if 0
 void detectAndDraw( Mat& img,
 		    FaceRecog *faceRecog,
 		    double scale)
@@ -371,6 +372,7 @@ void detectAndDraw( Mat& img,
 
     //cv::imshow( "opencv result", img );    
 }
+#endif
 
 void *cv_worker( void *my_workorderp )
 {
@@ -390,7 +392,8 @@ void *cv_worker( void *my_workorderp )
     else
       flip( frame, frameCopy, 0 );
     //    detectAndDraw( frameCopy, faceRecog->cascade, faceRecog->nestedCascade, scale );
-    detectAndDraw( frameCopy, faceRecog, scale );
+    // detectAndDraw( frameCopy, faceRecog, scale );
+    faceRecog->detectAndDraw( frameCopy, scale );
     if (faceRecog->faces.size() == 0) {
       app->send("to @FSM set AgentEnable = DISABLE");
     } else {

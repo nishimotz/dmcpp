@@ -13,8 +13,9 @@ using namespace cv;
 class FaceRecog {
  public:
   CascadeClassifier cascade, nestedCascade;
-  bool loadModels(void);
   vector<Rect> faces;
+  bool loadModels(void);
+  void detectAndDraw(Mat& img, double scale);
 };
 
 #endif
