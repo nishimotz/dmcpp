@@ -19,51 +19,30 @@
 // thread management
 // -----------------------------------------------------------
 
-// static thread_info_t m_thread_info;
 static Application *app = new Application();
 static FaceRecog *faceRecog = new FaceRecog();
+static SpRecog *spRecog = new SpRecog();
 
 void *julius_worker( void *my_workorderp )
 {
+#if 0
   workorder_t *workorderp = (workorder_t *)my_workorderp;
-
   Jconf *jconf; // Julius configuration parameter holder
   Recog *recog; // Julius recognition instance
-
   FILE *srm_log_fp; 
-  srm_log_fp = fopen("_srm_log.txt", "w"); 
-  jlog_set_output(srm_log_fp);
-
-  char conf_file_name[] = "julius.conf";
-  jconf = j_config_load_file_new(conf_file_name);
-  if (jconf == NULL) {
-    fprintf(stderr, "error in j_config_load_file_new\n");
-    app->tell("error in j_config_load_file_new");
-    return NULL;
-  }
-  
-  recog = j_create_instance_from_jconf(jconf);
-  if (recog == NULL) {
-    app->tell("error in j_create_instance_from_jconf");
-    return NULL;
-  }
-
-#if 0
-  callback_add(recog, CALLBACK_EVENT_SPEECH_READY, status_recready, (void *)app);
-  callback_add(recog, CALLBACK_EVENT_SPEECH_START, status_recstart, (void *)app);
-  callback_add(recog, CALLBACK_RESULT, output_result, (void *)app);
-  callback_add(recog, CALLBACK_RESULT_PASS1_INTERIM, result_pass1_current, (void *)app);
-#else
-  add_callbacks(recog, app);
 #endif
-  if (j_adin_init(recog) == FALSE) {    
+  spRecog->openLogFile();
+  spRecog->loadConfigFile(app);
+
+  add_callbacks(spRecog->recog, app);
+  if (j_adin_init(spRecog->recog) == FALSE) {    
     app->tell("error in j_adin_init");
     return NULL;
   }
 
-  j_recog_info(recog); /* output system information to log */
+  j_recog_info(spRecog->recog); /* output system information to log */
 
-  switch(j_open_stream(recog, NULL)) {
+  switch(j_open_stream(spRecog->recog, NULL)) {
   case 0:			
     app->tell("ok j_open_stream");
     break;
@@ -74,18 +53,14 @@ void *julius_worker( void *my_workorderp )
     app->tell("error in beginning input");
     return NULL;
   }
-  fflush(srm_log_fp);
+  fflush(spRecog->srm_log_fp);
 
-  int ret = j_recognize_stream(recog);
+  int ret = j_recognize_stream(spRecog->recog);
   if (ret == -1) {
     app->tell("error j_recognize_stream");
     return NULL;
   }
-
-  j_close_stream(recog);
-  j_recog_free(recog);
-
-  free(workorderp);
+  spRecog->close();
   return NULL;
 }
 

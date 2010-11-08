@@ -211,3 +211,33 @@ void add_callbacks(Recog *recog, Application *app)
   callback_add(recog, CALLBACK_RESULT, output_result, (void *)app);
   callback_add(recog, CALLBACK_RESULT_PASS1_INTERIM, result_pass1_current, (void *)app);
 }
+
+void SpRecog::openLogFile()
+{
+  this->srm_log_fp = fopen("_srm_log.txt", "w"); 
+  jlog_set_output(this->srm_log_fp);
+}
+
+bool SpRecog::loadConfigFile(Application *app)
+{
+  char conf_file_name[] = "julius.conf";
+  jconf = j_config_load_file_new(conf_file_name);
+  if (jconf == NULL) {
+    app->tell("error in j_config_load_file_new");
+    fprintf(stderr, "error in j_config_load_file_new\n");
+    return false;
+  }
+  recog = j_create_instance_from_jconf(jconf);
+  if (recog == NULL) {
+    app->tell("error in j_create_instance_from_jconf");
+    return false;
+  }
+  return true;
+}
+
+void SpRecog::close()
+{
+  j_close_stream(recog);
+  j_recog_free(recog);
+  free(workorderp);
+}
