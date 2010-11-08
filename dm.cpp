@@ -307,7 +307,6 @@ void detectAndDraw( Mat& img,
   CascadeClassifier nestedCascade = faceRecog->cascade;
     int i = 0;
     double t = 0;
-    vector<Rect> faces;
     const static Scalar colors[] =  { CV_RGB(0,0,255),
         CV_RGB(0,128,255),
         CV_RGB(0,255,255),
@@ -323,7 +322,7 @@ void detectAndDraw( Mat& img,
     equalizeHist( smallImg, smallImg );
 
     t = (double)cvGetTickCount(); 
-    cascade.detectMultiScale( smallImg, faces,
+    cascade.detectMultiScale( smallImg, faceRecog->faces,
         1.1, 2, 0
         |CV_HAAR_FIND_BIGGEST_OBJECT
         //|CV_HAAR_DO_ROUGH_SEARCH
@@ -334,13 +333,8 @@ void detectAndDraw( Mat& img,
    t = (double)cvGetTickCount() - t;
     // fprintf(stderr, "detection time = %g ms\n", t/((double)cvGetTickFrequency()*1000.) );
     
-    if (faces.size() == 0) {
-      app->send("to @FSM set AgentEnable = DISABLE");
-    } else {
-      app->send("to @FSM set AgentEnable = ENABLE");
-    }
-
-    for( vector<Rect>::const_iterator r = faces.begin(); r != faces.end(); r++, i++ )
+    for( vector<Rect>::const_iterator r = faceRecog->faces.begin(); 
+	 r != faceRecog->faces.end(); r++, i++ )
     {
         Mat smallImgROI;
         vector<Rect> nestedObjects;
@@ -397,6 +391,11 @@ void *cv_worker( void *my_workorderp )
       flip( frame, frameCopy, 0 );
     //    detectAndDraw( frameCopy, faceRecog->cascade, faceRecog->nestedCascade, scale );
     detectAndDraw( frameCopy, faceRecog, scale );
+    if (faceRecog->faces.size() == 0) {
+      app->send("to @FSM set AgentEnable = DISABLE");
+    } else {
+      app->send("to @FSM set AgentEnable = ENABLE");
+    }
     cv::imshow( "opencv result", frameCopy );    
     int k = waitKey( 10 );
     if( k >= 0 ) {

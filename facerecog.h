@@ -14,6 +14,7 @@ class FaceRecog {
  public:
   CascadeClassifier cascade, nestedCascade;
   bool loadModels(void);
+  vector<Rect> faces;
 };
 
 #endif
