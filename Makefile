@@ -26,8 +26,15 @@ facerecog.o: facerecog.cpp facerecog.h
 sprecog.o: sprecog.cpp sprecog.h
 	$(CC) $(CFLAGS) $(C2) $(C3) -c sprecog.cpp 
 
-gram: gram.txt
+gram: gram/gram.dfa
+
+proggram: proggram/proggram.dfa
+
+gram/gram.dfa:
 	rake
+
+proggram/proggram.dfa:
+	rake proggram
 
 adinpost.jpi: adinpost.cpp
 	$(CC) $(CFLAGS) -shared -o adinpost.jpi adinpost.cpp $(L2) $(L3)
