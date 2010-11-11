@@ -63,6 +63,7 @@ void output_result(Recog *recog, void *app_)
     
     /* check result status */
     if (r->result.status < 0) {      /* no results obtained */
+#if 0
       /* outout message according to the status code */
       switch(r->result.status) {
       case J_RESULT_STATUS_REJECT_POWER:
@@ -85,12 +86,13 @@ void output_result(Recog *recog, void *app_)
 	break;
       }
       /* continue to next process instance */
+#endif
       continue;
     }
-
+#if 0
     fprintf(stderr, "\n");
     fprintf(stderr, "search id:%d name:%s\n", r->config->id, r->config->name);
-
+#endif
     /* output results for all the obtained sentences */
     winfo = r->lm->winfo;
 
@@ -100,16 +102,17 @@ void output_result(Recog *recog, void *app_)
       seq = s->word;
       seqnum = s->word_num;
 
+#if 0
       /* output word sequence like Julius */
       fprintf(stderr, "sentence%d:", n+1);
       for(i=0;i<seqnum;i++) 
 	fprintf(stderr, " %s", to_utf(winfo->woutput[seq[i]]));
       fprintf(stderr, "\n");
-
+#endif
       if (n == 0 and seqnum == 3) {
 	app->onSpeechRecognized(to_utf(winfo->woutput[seq[1]]));
       }
-
+#if 0
       /* LM entry sequence */
       fprintf(stderr, "wseq%d:", n+1);
       for(i=0;i<seqnum;i++) 
@@ -137,11 +140,15 @@ void output_result(Recog *recog, void *app_)
 	  fprintf(stderr, "grammar%d: %d\n", n+1, s->gram_id);
 	}
       }
+#endif
     }
   }
+#if 0
   fflush(stderr);
+#endif
 }
 
+#if 0
 /* based on julius/output_module.c */
 void msock_word_out1(WORD_ID w, RecogProcess *r)
 {
@@ -164,6 +171,16 @@ void msock_word_out1(WORD_ID w, RecogProcess *r)
   }
   fprintf(stderr, "\"");
 }
+#else
+void msock_word_out1(WORD_ID w, RecogProcess *r, Application *app)
+{
+  WORD_INFO *winfo;
+  winfo = r->lm->winfo;
+  std::string s("out1 ");
+  s += to_utf(winfo->woutput[w]);
+  app->setCvresultMsg(s);
+}
+#endif
 
 void result_pass1_current(Recog *recog, void *app_)
 {
@@ -174,6 +191,9 @@ void result_pass1_current(Recog *recog, void *app_)
   int num;
   RecogProcess *r;
   boolean multi;
+
+  // std::cerr << "pass1 current" << std::endl;
+  // app->setCvresultMsg("pass1 interrim");
 
   if (recog->process_list->next != NULL) 
     multi = TRUE;
@@ -187,39 +207,47 @@ void result_pass1_current(Recog *recog, void *app_)
     winfo = r->lm->winfo;
     seq = r->result.pass1.word;
     num = r->result.pass1.word_num;
-
+#if 0
     if (multi) {
       fprintf(stderr, "<RECOGOUT ID=\"SR%02d\" NAME=\"%s\">\n", r->config->id, r->config->name);
     } else {
       fprintf(stderr, "<RECOGOUT>\n");
     }
-    fprintf(stderr, "  <PHYPO PASS=\"1\" SCORE=\"%f\" FRAME=\"%d\" TIME=\"%ld\">\n", r->result.pass1.score, r->result.num_frame, time(NULL));
+    fprintf(stderr, "  <PHYPO PASS=\"1\" SCORE=\"%f\" FRAME=\"%d\" TIME=\"%ld\">\n", 
+	    r->result.pass1.score, r->result.num_frame, time(NULL));
+#endif
+#if 0
     for (i=0;i<num;i++) {
       fprintf(stderr, "    <WHYPO");
       msock_word_out1(seq[i], r);
       fprintf(stderr, "/>\n");
     }
+#else
+    if (num == 3) {
+      char *p = to_utf(winfo->woutput[seq[1]]);;
+      if (p != NULL) {
+	//char buf[1000];
+	double t = r->result.num_frame / 100.0;
+	//sprintf(buf, "pass1: %s %5.3f", p , t);
+	//std::string s(buf);
+	//app->setCvresultMsg(s);
+	app->onSpeechPass1Recognized(p, t);
+      }
+    }
+#endif
+#if 0
     fprintf(stderr, "  </PHYPO>\n</RECOGOUT>\n.\n");
+#endif
   }
 }
 
-#if 0
-void add_callbacks(Recog *recog, Application *app)
-{
-  callback_add(recog, CALLBACK_EVENT_SPEECH_READY, status_recready, (void *)app);
-  callback_add(recog, CALLBACK_EVENT_SPEECH_START, status_recstart, (void *)app);
-  callback_add(recog, CALLBACK_RESULT, output_result, (void *)app);
-  callback_add(recog, CALLBACK_RESULT_PASS1_INTERIM, result_pass1_current, (void *)app);
-}
-#else
 void SpRecog::addCallbacks(Application *app)
 {
-  ::callback_add(this->recog, CALLBACK_EVENT_SPEECH_READY, status_recready, (void *)app);
-  ::callback_add(this->recog, CALLBACK_EVENT_SPEECH_START, status_recstart, (void *)app);
+  // ::callback_add(this->recog, CALLBACK_EVENT_SPEECH_READY, status_recready, (void *)app);
+  // ::callback_add(this->recog, CALLBACK_EVENT_SPEECH_START, status_recstart, (void *)app);
   ::callback_add(this->recog, CALLBACK_RESULT, output_result, (void *)app);
   ::callback_add(this->recog, CALLBACK_RESULT_PASS1_INTERIM, result_pass1_current, (void *)app);
 }
-#endif
 
 void SpRecog::openLogFile()
 {

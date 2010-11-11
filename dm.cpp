@@ -29,8 +29,6 @@ void *julius_worker( void *my_workorderp )
   return NULL;
 }
 
-static string cvresult_msg = "hello";
-
 void put_message(Mat &image, string msg)
 {
   // void putText(Mat& img, const string& text, Point org, int fontFace, double fontScale, Scalar color, int thickness=1, int lineType=8, bool bottomLeftOrigin=false)
@@ -64,7 +62,7 @@ void *cv_worker( void *my_workorderp )
     if( iplImg->origin == IPL_ORIGIN_TL )
       frame.copyTo( frameCopy );
     else
-      flip( frame, frameCopy, 0 );
+      cv::flip( frame, frameCopy, 0 );
     faceRecog->detectAndDraw( frameCopy, scale );
 #if 0
     if (faceRecog->faces.size() == 0) {
@@ -78,12 +76,15 @@ void *cv_worker( void *my_workorderp )
     int k = cv::waitKey( 10 );
     if( k >= 0 ) {
       cerr << "key " << k << " pressed" << endl;
-      // goto _cleanup_;
+      if (k == 27) {
+	goto _cleanup_;
+      }
     }
   }
   cv::waitKey(0);
  _cleanup_:
   cvReleaseCapture( &capture );
+  exit(0);
 }
 
 int main(int argc, char *argv[])

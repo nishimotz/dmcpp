@@ -76,20 +76,19 @@ void Application::agentSpeak(const char *sent)
 
 void Application::onSpeechRecognized(const char *word)
 {
-#if 0
-  std::string str;
-  str = "あなたは";
-  str += word;
-  str += "と言いました。";
-  this->agentSpeak(str.c_str());
-#else
   std::string msg("pass2 ");
   msg += word;
   this->setCvresultMsg(msg);
-
   std::string speak("そうですね");
   this->agentSpeak(speak.c_str());
-#endif
+}
+
+void Application::onSpeechPass1Recognized(const char *word, double t)
+{
+  char buf[1000];
+  sprintf(buf, "pass1: %s %5.3f", word, t);
+  std::string s(buf);
+  this->setCvresultMsg(s);
 }
 
 void Application::openLogFile()

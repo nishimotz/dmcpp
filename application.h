@@ -35,7 +35,7 @@ class Application {
   //
   void send(const char *msg);
   void tell(const char *msg);
-  void onSpeechPass1Recognized(const char *word);
+  void onSpeechPass1Recognized(const char *word, double t);
   void onSpeechRecognized(const char *word);
   void agentSpeak(const char *sent);
   void iteration();
