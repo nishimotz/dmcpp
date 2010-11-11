@@ -3,6 +3,7 @@
  * since 2010-06 
  * by Takuya Nishimoto
  * contributed by Hiroki Deguchi, Lu Di
+ * http://en.nishimotz.com/project:dmcpp
  * http://ja.nishimotz.com/project:dmcpp
  * based on 
  *  julius-simple.c (julius 4.1.5) by Akinobu Lee
@@ -28,6 +29,25 @@ void *julius_worker( void *my_workorderp )
   return NULL;
 }
 
+static string cvresult_msg = "hello";
+
+void put_message(Mat &image, string msg)
+{
+  // void putText(Mat& img, const string& text, Point org, int fontFace, double fontScale, Scalar color, int thickness=1, int lineType=8, bool bottomLeftOrigin=false)
+  int fontFace = FONT_HERSHEY_PLAIN;
+  double fontScale = 2.0;
+  int thickness = 2;
+  cv::Scalar color(255,0,0); // (b,g,r)
+  cv::putText(image, 
+	      msg, 
+	      cvPoint(30, 30), 
+	      fontFace,
+	      fontScale,
+	      color,
+	      thickness
+	      );
+}
+
 void *cv_worker( void *my_workorderp )
 {
   // workorder_t *workorderp = (workorder_t *)my_workorderp;
@@ -46,11 +66,14 @@ void *cv_worker( void *my_workorderp )
     else
       flip( frame, frameCopy, 0 );
     faceRecog->detectAndDraw( frameCopy, scale );
+#if 0
     if (faceRecog->faces.size() == 0) {
       app->send("to @FSM set AgentEnable = DISABLE");
     } else {
       app->send("to @FSM set AgentEnable = ENABLE");
     }
+#endif
+    put_message(frameCopy, app->getCvresultMsg());
     cv::imshow( "opencv result", frameCopy );    
     int k = cv::waitKey( 10 );
     if( k >= 0 ) {
@@ -65,12 +88,10 @@ void *cv_worker( void *my_workorderp )
 
 int main(int argc, char *argv[])
 {
-  sleep(3);
-
   workorder_t *workorderp; // TODO: initialize
-
   create_and_detach_thread(workorderp, julius_worker);
   create_and_detach_thread(workorderp, cv_worker);
+  sleep(3);
 
   app->openLogFile();
   app->send("to @AM-MCL set AutoMove = 1"); // enable face motion

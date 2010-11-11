@@ -107,12 +107,6 @@ void output_result(Recog *recog, void *app_)
       fprintf(stderr, "\n");
 
       if (n == 0 and seqnum == 3) {
-#if 0
-	const int size = 1000;
-	char buf[size];
-	sprintf(buf, "to @AM-MCL set Speak = %s", to_utf(winfo->woutput[seq[1]]));
-	app->send(buf);
-#endif
 	app->onSpeechRecognized(to_utf(winfo->woutput[seq[1]]));
       }
 

@@ -4,6 +4,7 @@
 #include <iostream>
 #include <cstdio>
 #include <cstring>
+#include <string>
 #include <time.h>
 #include <pthread.h>
 #include <iconv.h>
@@ -30,13 +31,18 @@ class Application {
   thread_info_t m_thread_info;
   FILE *dm_log_fp;
   bool agentSpeaking;
+  std::string cvresultMsg;
+  //
   void send(const char *msg);
   void tell(const char *msg);
+  void onSpeechPass1Recognized(const char *word);
   void onSpeechRecognized(const char *word);
   void agentSpeak(const char *sent);
   void iteration();
   void openLogFile();
   void closeLogFile();
+  void setCvresultMsg(std::string s) { cvresultMsg = s; }
+  std::string getCvresultMsg() { return cvresultMsg; }
   Application();
 };
 

@@ -9,7 +9,8 @@ L3 = `libsent-config --libs`
 CFLAGS = -g -O2
 OBJS = application.o facerecog.o sprecog.o dm.o
 
-all: dm gram adinpost.jpi
+# all: dm proggram adinpost.jpi
+all: dm proggram
 
 dm: $(OBJS)
 	$(CC) $(CFLAGS) $(OBJS) $(L1) $(L2) $(L3) -o dm 
@@ -45,3 +46,6 @@ clean:
 distclean:
 	$(RM) *.o *.bak *~ core TAGS
 	$(RM) dm
+
+run:
+	./app/script/runner
